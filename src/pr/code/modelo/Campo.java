@@ -36,7 +36,7 @@ public class Campo {
         } else if(deltaGeral == 2 && diagonal){
             vizinhos.add(vizinho);
             return true;
-        } else return false;
+        } else {return false; }
     }
 
     void alternarMarcacao() {
@@ -53,10 +53,10 @@ public class Campo {
                 throw new ExplosaoException();
             }
 
-            if(vizinhancaSegura()) vizinhos.forEach(Campo::abrir);
+            if(vizinhancaSegura()) {vizinhos.forEach(Campo::abrir);}
 
             return true;
-        }else return false;
+        }else {return false;}
     }
 
     boolean vizinhancaSegura() {
@@ -65,6 +65,10 @@ public class Campo {
 
     void minar(){
         minado = true;
+    }
+
+    public boolean isMinado() {
+        return minado;
     }
 
     public boolean isMarcado() {
@@ -87,7 +91,7 @@ public class Campo {
         return coluna;
     }
 
-    boolean objetivoAlcancado() {
+    public boolean objetivoAlcancado() {
         boolean desvendado = !minado && aberto;
         boolean protegido = minado && marcado;
         return  desvendado || protegido;
