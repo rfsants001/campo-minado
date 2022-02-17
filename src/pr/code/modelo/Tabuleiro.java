@@ -12,7 +12,7 @@ public class Tabuleiro implements CampoObservador{
     private final int minas;
 
     private final List<Campo> campos = new ArrayList<>();
-    private final List<Consumer<Boolean>> observadores = new ArrayList<>();
+    private final List<Consumer<ResultadoEvento>> observadores = new ArrayList<>();
 
     public Tabuleiro(int linhas, int colunas, int minas) {
         this.linhas = linhas;
@@ -28,25 +28,19 @@ public class Tabuleiro implements CampoObservador{
         campos.forEach(funcao);
     }
 
-    public void registrarObservador(Consumer<Boolean> observador){
+    public void registrarObservador(Consumer<ResultadoEvento> observador){
         observadores.add(observador);
     }
 
     public void notificarObservadores(boolean resultado){
-        observadores.stream().forEach(o -> o.accept(resultado));
+        observadores.stream().forEach(o -> o.accept(new ResultadoEvento(resultado)));
     }
 
     public void abrir(int linha, int coluna){
-        try{
-            campos.stream()
-                    .filter(c -> c.getLinha() == linha && c.getColuna() == coluna)
-                    .findFirst()
-                    .ifPresent(c -> c.abrir());
-        }catch (Exception e) {
-            //FIXME Ajustar a implementação do método abrir
-            campos.forEach(c -> c.setAberto(true));
-            throw e;
-        }
+        campos.stream()
+                .filter(c -> c.getLinha() == linha && c.getColuna() == coluna)
+                .findFirst()
+                .ifPresent(c -> c.abrir());
     }
 
 
@@ -59,9 +53,9 @@ public class Tabuleiro implements CampoObservador{
     }
 
     private void associarVizinhos() {
-        for (int linha = 0; linha < linhas; linha++) {
-            for (int coluna = 0; coluna < colunas; coluna++) {
-                campos.add(new Campo(linha, coluna));
+        for (Campo c1 : campos) {
+            for (Campo c2 : campos) {
+                c1.addVizinho(c2);
             }
         }
     }
@@ -82,10 +76,10 @@ public class Tabuleiro implements CampoObservador{
         Predicate<Campo> minado = c -> c.isMinado();
 
         do {
-            minasArmadas = campos.stream().filter(minado).count();
             int aleatorio = (int) (Math.random() * campos.size());
-
             campos.get(aleatorio).minar();
+
+            minasArmadas = campos.stream().filter(minado).count();
         }while(minasArmadas < minas);
     }
 
@@ -110,15 +104,13 @@ public class Tabuleiro implements CampoObservador{
     public void eventoOcorreu(Campo campo, CampoEvento evento) {
         if(evento == CampoEvento.EXPLODIR) {
             mostrarMinas();
-            System.out.println("Perdeu ...");
             notificarObservadores(false);
         }else if (objetivoAlcancado()) {
-            System.out.println("Ganhou...");
             notificarObservadores(true);
         }
     }
 
     private void mostrarMinas(){
-        campos.stream().filter(c -> c.isMinado()).forEach(c -> c.setAberto(true));
+        campos.stream().filter(c -> c.isMinado()).filter(c -> !c.isMarcado()).forEach(c -> c.setAberto(true));
     }
 }
